@@ -22,10 +22,6 @@ EventBridge --> Lambda (fetch-news) --> NewsAPI.org --> DynamoDB
 ↑
 Frontend (HTML/CSS/JS) <-- API Gateway <-- Lambda (news-api-handler)
 
-yaml
-Copy
-Edit
-
 ---
 
 ## ⚙️ Tech Stack
@@ -129,7 +125,6 @@ Build a serverless news aggregator using AWS Console that:
 - Click **JSON** tab
 - Paste this policy:
 
-```json
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -148,11 +143,9 @@ Build a serverless news aggregator using AWS Console that:
     ]
 }
 
-Click Next
-
-Policy name: lambda-dynamodb-policy
-
-Click Create policy
+- Click **Next**
+- Policy name: `lambda-dynamodb-policy`
+- Click **Create policy**
 
 ---
 
