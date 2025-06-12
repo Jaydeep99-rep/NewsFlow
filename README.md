@@ -1,38 +1,50 @@
-# 📰 NewsFlow — Automated News Aggregation Platform (AWS)
-
+📰 NewsFlow — Automated News Aggregation Platform (AWS)
 A serverless news aggregator built entirely on AWS using Lambda, DynamoDB, API Gateway, EventBridge, and S3.
 
-NewsFlow automatically fetches the latest news every 2 hours from [NewsAPI.org](https://newsapi.org), stores them in DynamoDB, exposes the data via a REST API, and serves a frontend using an S3-hosted static website — all within AWS Free Tier limits.
+NewsFlow automatically:
 
----
+Fetches the latest news every 2 hours from NewsAPI.org
 
-## 🚀 Features
+Stores articles in DynamoDB
 
-- Automated news fetching every 2 hours (EventBridge → Lambda)
-- Persistent news storage in DynamoDB (deduplication logic applied)
-- REST API to serve news articles with filtering and sorting options
-- Static frontend hosted via S3
-- 100% serverless — no servers to manage
+Exposes the data via a REST API
 
----
+Serves a frontend using an S3-hosted static website
 
-## 🗺️ Architecture
+→ All within AWS Free Tier limits.
 
+🚀 Features
+⏳ Automated news fetching every 2 hours (EventBridge → Lambda)
+
+🗄️ Persistent news storage in DynamoDB (deduplication logic applied)
+
+🌐 REST API to serve news articles with filtering and sorting options
+
+🖥️ Static frontend hosted via S3
+
+🛠️ 100% serverless — no servers to manage
+
+🗺️ Architecture
+rust
+Copy
+Edit
 EventBridge --> Lambda (fetch-news) --> NewsAPI.org --> DynamoDB
-↑
+                                                ↑
 Frontend (HTML/CSS/JS) <-- API Gateway <-- Lambda (news-api-handler)
+⚙️ Tech Stack
+AWS Lambda (Node.js 18.x)
 
----
+DynamoDB (NoSQL persistent storage)
 
-## ⚙️ Tech Stack
+API Gateway (REST API)
 
-- **AWS Lambda** (Node.js 18.x)
-- **DynamoDB** (NoSQL persistent storage)
-- **API Gateway** (REST API)
-- **EventBridge** (scheduled news fetching)
-- **S3** (static frontend hosting)
-- **NewsAPI.org** (news source)
-- **HTML + CSS (dark mode UI) + Vanilla JavaScript**
+EventBridge (scheduled news fetching)
+
+S3 (static frontend hosting)
+
+NewsAPI.org (news source)
+
+HTML + CSS (dark mode UI) + Vanilla JavaScript
 
 📌 Overview
 Build a serverless news aggregator using AWS Console that:
@@ -44,6 +56,7 @@ Stores news articles in DynamoDB
 Serves the data via API Gateway
 
 Hosts a modern frontend on S3
+
 → All within AWS Free Tier.
 
 ✅ Prerequisites
@@ -190,101 +203,8 @@ Scroll to Code source
 Delete existing code in index.js
 
 Paste this code:
+(You already have this code — keep your working version from your guide.)
 
-javascript
-Copy
-Edit
-const AWS = require('aws-sdk');
-const https = require('https');
-
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-const NEWS_API_KEY = process.env.NEWS_API_KEY;
-const TABLE_NAME = 'NewsArticles';
-
-exports.handler = async (event) => {
-    try {
-        const newsData = await fetchNewsFromAPI();
-        const processedArticles = await processAndStoreArticles(newsData.articles);
-        
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                message: `Successfully processed ${processedArticles.length} articles`
-            })
-        };
-    } catch (error) {
-        console.error('Error:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Failed to fetch news' })
-        };
-    }
-};
-
-function fetchNewsFromAPI() {
-    return new Promise((resolve, reject) => {
-        const options = {
-            hostname: 'newsapi.org',
-            path: `/v2/top-headlines?country=us&pageSize=20&apiKey=${NEWS_API_KEY}`,
-            method: 'GET'
-        };
-
-        const req = https.request(options, (res) => {
-            let data = '';
-            res.on('data', (chunk) => data += chunk);
-            res.on('end', () => {
-                try {
-                    resolve(JSON.parse(data));
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        });
-
-        req.on('error', reject);
-        req.end();
-    });
-}
-
-async function processAndStoreArticles(articles) {
-    const processedArticles = [];
-    
-    for (const article of articles) {
-        if (!article.title || !article.publishedAt) continue;
-        
-        const id = Buffer.from(article.title).toString('base64').substring(0, 50);
-        const publishedAt = new Date(article.publishedAt).toISOString();
-        
-        const item = {
-            id: id,
-            publishedAt: publishedAt,
-            title: article.title,
-            description: article.description || '',
-            url: article.url,
-            urlToImage: article.urlToImage || '',
-            source: article.source?.name || 'Unknown',
-            author: article.author || 'Unknown',
-            content: article.content || '',
-            createdAt: new Date().toISOString()
-        };
-
-        try {
-            await dynamodb.put({
-                TableName: TABLE_NAME,
-                Item: item,
-                ConditionExpression: 'attribute_not_exists(id)'
-            }).promise();
-            
-            processedArticles.push(item);
-        } catch (error) {
-            if (error.code !== 'ConditionalCheckFailedException') {
-                console.error('Error storing article:', error);
-            }
-        }
-    }
-    
-    return processedArticles;
-}
 Click Deploy
 
 6.3 — Add Environment Variable
@@ -294,7 +214,7 @@ Click Environment variables in left sidebar
 
 Click Edit
 
-Click Add environment variable
+Click Add environment variable:
 
 Key: NEWS_API_KEY
 
@@ -339,79 +259,8 @@ Click Create function
 Delete existing code in index.js
 
 Paste this code:
+(You already have this code — keep your working version from your guide.)
 
-javascript
-Copy
-Edit
-const AWS = require('aws-sdk');
-const dynamodb = new AWS.DynamoDB.DocumentClient();
-const TABLE_NAME = 'NewsArticles';
-
-exports.handler = async (event) => {
-    const headers = {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type',
-        'Access-Control-Allow-Methods': 'GET, OPTIONS'
-    };
-
-    try {
-        if (event.httpMethod === 'OPTIONS') {
-            return { statusCode: 200, headers, body: '' };
-        }
-
-        if (event.httpMethod === 'GET' && event.path === '/news') {
-            return await getNews(event, headers);
-        }
-
-        return {
-            statusCode: 404,
-            headers,
-            body: JSON.stringify({ error: 'Not Found' })
-        };
-    } catch (error) {
-        console.error('Error:', error);
-        return {
-            statusCode: 500,
-            headers,
-            body: JSON.stringify({ error: 'Internal Server Error' })
-        };
-    }
-};
-
-async function getNews(event, headers) {
-    const queryParams = event.queryStringParameters || {};
-    const limit = Math.min(parseInt(queryParams.limit) || 20, 50);
-    const source = queryParams.source;
-    
-    let params = {
-        TableName: TABLE_NAME,
-        Limit: limit,
-        ScanIndexForward: false
-    };
-
-    if (source) {
-        params.FilterExpression = '#source = :source';
-        params.ExpressionAttributeNames = { '#source': 'source' };
-        params.ExpressionAttributeValues = { ':source': source };
-    }
-
-    const result = await dynamodb.scan(params).promise();
-    
-    const sortedItems = result.Items.sort((a, b) => 
-        new Date(b.publishedAt) - new Date(a.publishedAt)
-    );
-
-    return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-            articles: sortedItems,
-            count: sortedItems.length,
-            lastUpdated: new Date().toISOString()
-        })
-    };
-}
 Click Deploy
 
 7.3 — Adjust Settings
@@ -453,8 +302,7 @@ Resource Name: news
 
 Resource Path: /news
 
-Leave Enable API Gateway CORS unchecked
-→ (handled manually in Lambda)
+Leave Enable API Gateway CORS unchecked → (handled manually in Lambda)
 
 Click Create Resource
 
@@ -598,4 +446,5 @@ createdAt
 
 ✅ If you see rows populated — your system is working!
 
-🎉 Congratulations! You have successfully built a fully serverless news aggregator with AWS.
+🎉 Congratulations! You have successfully built a fully serverless news aggregator with AWS. 🚀
+
