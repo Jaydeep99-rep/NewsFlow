@@ -334,7 +334,125 @@ Edit
 
 ---
 
-## 🧪 Phase 9: Testing and Initial Data
+---
+
+🖥️ Phase 7: Frontend Hosting on S3 (Static Website)
+Now that your backend is ready and the API is live, let’s host the frontend on an S3 bucket as a static website.
+
+Step 1️⃣ — Prepare Frontend Files
+Prepare a simple frontend (you can use HTML, CSS, JS):
+
+index.html
+
+style.css (optional)
+
+app.js (calls your REST API and renders news)
+
+In your app.js, make sure to point API requests to:
+
+javascript
+Copy
+Edit
+const API_URL = 'https://YOUR-API-ID.execute-api.us-east-1.amazonaws.com/prod/news';
+👉 Replace YOUR-API-ID with your real API Gateway ID.
+
+Step 2️⃣ — Create an S3 Bucket
+Go to AWS Console → Search "S3" → Click S3
+
+Click Create bucket
+
+Fill in details:
+
+Bucket name: Example → newsflow-frontend-YOURNAME (must be globally unique)
+
+AWS Region: us-east-1
+
+Under Object Ownership:
+
+Select: ACLs disabled (default)
+
+Under Block Public Access settings:
+
+Uncheck Block all public access
+
+Confirm you want to allow public access (checkbox)
+
+Click Create bucket
+
+Step 3️⃣ — Upload Frontend Files
+Click your newly created bucket name
+
+Click Upload
+
+Upload:
+
+index.html
+
+style.css
+
+app.js
+
+Click Upload
+
+Step 4️⃣ — Enable Static Website Hosting
+Go to your S3 bucket → Click Properties tab
+
+Scroll down to Static website hosting
+
+Click Edit
+
+Enable Static website hosting
+
+Hosting type: Host a static website
+
+Index document: index.html
+
+(Optional) Error document: index.html or error.html
+
+Click Save changes
+
+Step 5️⃣ — Set Bucket Policy for Public Access
+You need to allow public read access to your bucket.
+
+Go to your S3 bucket → Permissions tab
+
+Under Bucket policy → Click Edit
+
+Paste the following policy:
+
+json
+Copy
+Edit
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+        }
+    ]
+}
+👉 Replace YOUR-BUCKET-NAME with your actual bucket name.
+
+Click Save changes
+
+Step 6️⃣ — Access Your Frontend
+Go to your bucket → Properties tab
+
+Scroll to Static website hosting
+
+Copy the Bucket website endpoint URL → Example:
+
+arduino
+Copy
+Edit
+http://newsflow-frontend-YOURNAME.s3-website-us-east-1.amazonaws.com
+Paste this URL into your browser → You should see your NewsFlow frontend running and fetching data from the API. 🎉
+
+## 🧪 Phase 8: Testing and Initial Data
 
 ### Step 1️⃣8️⃣ — Test Lambda Manually
 
