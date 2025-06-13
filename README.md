@@ -4,7 +4,8 @@ A serverless news aggregator built entirely on AWS using Lambda, DynamoDB, API G
 
 NewsFlow automatically fetches the latest news every 2 hours from [NewsAPI.org](https://newsapi.org), stores them in DynamoDB, exposes the data via a REST API, and serves a frontend using an S3-hosted static website — all within AWS Free Tier limits.
 
-![image](https://github.com/user-attachments/assets/64be76b0-1e79-4409-93ee-8488dbdc784a)
+![WEBSITE 1](https://github.com/user-attachments/assets/d6d35e4d-630e-4250-bc83-65c6de20a424)
+
 
 
 ---
